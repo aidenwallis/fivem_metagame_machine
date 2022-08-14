@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .hidden {
+        display: none;
+      }
+      #chat-controller {
+        box-sizing: border-box;
+        border: 0;
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        padding: 10px;
+        width: 35seerem;
+        height: 40rem;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      // getChannel gives us a way to fetch users' twitch IDs. I was too lazy to implement the Twitch API...
+      // so it's fossabot only (sorry)
+      function getChannel(slug) {
+        return fetch(`https://api.fossabot.com/v2/cached/channels/by-slug/${encodeURIComponent(slug)}`)
+          .then((resp) => {
+            if (resp.status !== 200) {
+              throw new Error(`Non 200 http status code received: ${resp.status}`);
+            }
+            return resp;
+          })
+          .then((resp) => resp.json())
+          .then((body) => body?.channel || null)
+          .catch((error) => {
+            console.error(`Failed to get channel: ${error.toString()}`);
+            return null;
+          });
+      }
+
+      const storageKey = "metagame_machine.slug";
+      const getKey = () => localStorage.getItem(storageKey) || "";
+      const setKey = (slug) => localStorage.setItem(storageKey, slug);
+
+      const controller = document.createElement("iframe");
+      controller.id = "chat-controller";
+      document.body.appendChild(controller);
+
+      const hiddenClass = "hidden";
+
+      async function load() {
+        controller?.classList.add(hiddenClass);
+
+        const slug = getKey();
+        if (!slug) {
+          return;
+        }
+        const channel = await getChannel(slug);
+        if (!channel) {
+          return null;
+        }
+
+        controller.src = `https://aiden-twitch-chat-widget.netlify.app/${encodeURIComponent(
+          channel.provider_id,
+        )}-${encodeURIComponent(channel.login)}`;
+        controller?.classList.remove(hiddenClass);
+      }
+
+      setKey("aiden");
+      console.log("yo");
+      load();
+    </script>
+  </body>
+</html>
