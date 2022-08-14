@@ -4,24 +4,77 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" />
     <title>Document</title>
     <style>
-      .hidden {
-        display: none;
-      }
-      #chat-controller {
+      * {
         box-sizing: border-box;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      iframe {
         border: 0;
-        position: fixed;
-        right: 0;
-        bottom: 0;
-        padding: 10px;
-        width: 35seerem;
         height: 40rem;
+        width: 100%;
+      }
+
+      .container {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        width: 35rem;
+        padding: 10px;
+      }
+
+      form,
+      input,
+      button {
+        border: 0;
+        border-radius: 5px;
+      }
+
+      form {
+        display: flex;
+        padding: 10px;
+        background-color: #1b1d20;
+      }
+
+      input {
+        min-width: 0;
+        flex: 1;
+        padding: 7px 15px;
+        background-color: #fff;
+      }
+
+      button {
+        background-color: #1baafd;
+        height: 100%;
+        display: block;
+        padding: 9px 10px;
+        margin-left: 10px;
+        align-items: center;
+        color: #fff;
+        font-family: "Roboto", sans-serif;
+        font-weight: 700;
+      }
+
+      button:hover {
+        background-color: #1baafd;
+      }
+
+      button:active {
+        background-color: #3e98f7;
       }
     </style>
   </head>
   <body>
+    <div class="container">
+      <iframe src="" id="chat-controller"></iframe>
+      <form id="channel-form">
+        <input type="text" id="channel-input" placeholder="eg. aiden" required="required" />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
     <script>
       // getChannel gives us a way to fetch users' twitch IDs. I was too lazy to implement the Twitch API...
       // so it's fossabot only (sorry)
@@ -45,19 +98,18 @@
       const getKey = () => localStorage.getItem(storageKey) || "";
       const setKey = (slug) => localStorage.setItem(storageKey, slug);
 
-      const controller = document.createElement("iframe");
-      controller.id = "chat-controller";
-      document.body.appendChild(controller);
-
-      const hiddenClass = "hidden";
+      const controller = document.getElementById("chat-controller");
+      const form = document.getElementById("channel-form");
+      const input = document.getElementById("channel-input");
 
       async function load() {
-        controller?.classList.add(hiddenClass);
-
         const slug = getKey();
+        input.value = slug;
+
         if (!slug) {
           return;
         }
+
         const channel = await getChannel(slug);
         if (!channel) {
           return null;
@@ -66,11 +118,22 @@
         controller.src = `https://aiden-twitch-chat-widget.netlify.app/${encodeURIComponent(
           channel.provider_id,
         )}-${encodeURIComponent(channel.login)}`;
-        controller?.classList.remove(hiddenClass);
       }
 
-      setKey("aiden");
-      console.log("yo");
+      form.onsubmit = (event) => {
+        event.preventDefault();
+
+        setKey(input.value);
+        load();
+
+        fetch(`https://${GetParentResourceName()}/UnfocusNUI`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+          },
+        });
+      };
+
       load();
     </script>
   </body>
